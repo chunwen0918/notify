@@ -23,6 +23,7 @@ import java.util.regex.Pattern;
 public class NotificationMonitorService extends NotificationListenerService {
     private static final String AliPay = "alipay";
     private static final String WeixinPay = "wechat";
+    private static final String JuShang = "jushang";
     private static int version;
     //	private MyHandler handler;
     public long lastTimePosted = System.currentTimeMillis();
@@ -31,6 +32,7 @@ public class NotificationMonitorService extends NotificationListenerService {
     private Pattern pAlipay2;
     private Pattern pAlipayDianyuan;
     private Pattern pWeixin;
+    private Pattern pJushang;
     private MediaPlayer payComp;
     private MediaPlayer payRecv;
     private MediaPlayer payNetWorkError;
@@ -46,6 +48,7 @@ public class NotificationMonitorService extends NotificationListenerService {
         pAlipay2 = Pattern.compile(pattern);
         pAlipayDianyuan = Pattern.compile("支付宝成功收款([\\d\\.]+)元。收钱码收钱提现免费，赶紧推荐顾客使用");
         pWeixin = Pattern.compile("微信支付收款([\\d\\.]+)元");
+        pJushang = Pattern.compile("聚商收款([\\d\\.]+)元");
         pJxYmf_Nofity = Pattern.compile("一笔收款交易已完成，金额([\\d\\.]+)元");
         payComp = MediaPlayer.create(this, R.raw.paycomp);
         payRecv = MediaPlayer.create(this, R.raw.payrecv);
@@ -118,6 +121,15 @@ public class NotificationMonitorService extends NotificationListenerService {
                 String uname = "微信用户";
                 String money = m.group(1);
                 postMethod(WeixinPay, money, uname, false);
+            }
+        }
+        else if (pkgName.equals("com.zybank.lmsapp") && text != null) {
+            // 现在创建 matcher 对象
+            Matcher m = pJushang.matcher(text);
+            if (m.find()) {
+                String uname = "聚商用户";
+                String money = m.group(1);
+                postMethod(JuShang, money, uname, false);
             }
         }
     }

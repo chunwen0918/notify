@@ -42,30 +42,20 @@ public class LoginActivity extends AppCompatActivity {
                     new Thread() {
                         @Override
                         public void run() {
-                            final Map<String, String> params = new HashMap<String, String>();
-                            params.put("tel", StrTel);
-                            params.put("password", StrPwd);
-                            String steResult = HttpUtils.submitPostData(strUrlPath, params, "utf-8");
-                            try {
-                                JSONObject jsonObject = new JSONObject(steResult);
-                                String msg = jsonObject.optString("msg");
-                                JSONObject dataObj = jsonObject.getJSONObject("data");
-                                if (dataObj != null) {
-                                    User.instance().merchant_id = dataObj.optString("merchant_id");
-                                    Intent intent = new Intent(LoginActivity.this, MainActivity.class);
-                                    LoginActivity.this.startActivity(intent);
-                                    LoginActivity.this.finish();
-                                } else {
-                                    Toast.makeText(LoginActivity.this, msg, Toast.LENGTH_SHORT).show();
-                                }
-                            } catch (JSONException e) {
-                                e.printStackTrace();
-                            }
+                            login();
                         }
                     }.start();
                 }
             }
         });
+        if (SPUtils.get(LoginActivity.this, "autologin", "").toString().equals("1")) {
+            new Thread() {
+                @Override
+                public void run() {
+                    autoLogin();
+                }
+            }.start();
+        }
     }
 
     private boolean checkText() {
@@ -79,5 +69,54 @@ public class LoginActivity extends AppCompatActivity {
         }
 
         return true;
+    }
+
+    private void login() {
+        final Map<String, String> params = new HashMap<String, String>();
+        params.put("tel", StrTel);
+        params.put("password", StrPwd);
+        String steResult = HttpUtils.submitPostData(strUrlPath, params, "utf-8");
+        try {
+            JSONObject jsonObject = new JSONObject(steResult);
+            String msg = jsonObject.optString("msg");
+            JSONObject dataObj = jsonObject.getJSONObject("data");
+            if (dataObj != null) {
+                SPUtils.put(LoginActivity.this, "autologin", "1");
+                SPUtils.put(LoginActivity.this, "tel", StrTel);
+                SPUtils.put(LoginActivity.this, "pwd", StrPwd);
+                User.instance().merchant_id = dataObj.optString("merchant_id");
+                Intent intent = new Intent(LoginActivity.this, MainActivity.class);
+                LoginActivity.this.startActivity(intent);
+                LoginActivity.this.finish();
+            } else {
+                SPUtils.put(LoginActivity.this, "autologin", "0");
+                Toast.makeText(LoginActivity.this, msg, Toast.LENGTH_SHORT).show();
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void autoLogin() {
+        final Map<String, String> params = new HashMap<String, String>();
+        params.put("tel", SPUtils.get(LoginActivity.this, "tel", "").toString());
+        params.put("password", SPUtils.get(LoginActivity.this, "pwd", "").toString());
+        String steResult = HttpUtils.submitPostData(strUrlPath, params, "utf-8");
+        try {
+            JSONObject jsonObject = new JSONObject(steResult);
+            String msg = jsonObject.optString("msg");
+            JSONObject dataObj = jsonObject.getJSONObject("data");
+            if (dataObj != null) {
+                User.instance().merchant_id = dataObj.optString("merchant_id");
+                Intent intent = new Intent(LoginActivity.this, MainActivity.class);
+                LoginActivity.this.startActivity(intent);
+                LoginActivity.this.finish();
+            } else {
+                SPUtils.put(LoginActivity.this, "autologin", "0");
+                Toast.makeText(LoginActivity.this, msg, Toast.LENGTH_SHORT).show();
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
     }
 }
